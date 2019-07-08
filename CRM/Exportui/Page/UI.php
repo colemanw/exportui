@@ -22,10 +22,6 @@ class CRM_Exportui_Page_UI extends CRM_Core_Page {
 
     $loader = new Civi\Angular\AngularLoader();
     $loader->setModules(['exportui']);
-    $loader->setPageName('civicrm/exportui');
-    $loader->useApp([
-      'defaultRoute' => '/export',
-    ]);
     $loader->load();
     parent::run();
   }

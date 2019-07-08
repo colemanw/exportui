@@ -1,29 +1,8 @@
 (function(angular, $, _) {
 
-  angular.module('exportui').config(function($routeProvider) {
-      $routeProvider.when('/export', {
-        controller: 'Exportuiexport',
-        templateUrl: '~/exportui/export.html'
+  angular.module('exportui', CRM.angular.modules)
 
-        // If you need to look up data when opening the page, list it out
-        // under "resolve".
-        //resolve: {
-        //  myContact: function(crmApi) {
-        //    return crmApi('Contact', 'getsingle', {
-        //      id: 'user_contact_id',
-        //      return: ['first_name', 'last_name']
-        //    });
-        //  }
-        //}
-      });
-    }
-  );
-
-  // The controller uses *injection*. This default injects a few things:
-  //   $scope -- This is the set of variables shared between JS and HTML.
-  //   crmApi, crmStatus, crmUiHelp -- These are services provided by civicrm-core.
-  //   myContact -- The current contact, defined above in config().
-  angular.module('exportui').controller('Exportuiexport', function($scope, $timeout) {
+  .controller('ExportUiCtrl', function($scope, $timeout) {
     // The ts() and hs() functions help load strings for this module.
     var ts = $scope.ts = CRM.ts('exportui');
 
@@ -31,6 +10,11 @@
     $scope.contact_types = CRM.vars.exportUi.contact_types;
     $scope.location_type_id = CRM.vars.exportUi.location_type_id;
     $scope.fields = {};
+    $scope.data = {
+      contact_type: 'Individual',
+      columns: []
+    };
+    $scope.new = {col: ''};
     var fields = _.cloneDeep(CRM.vars.exportUi.fields);
     var relatedFields = _.cloneDeep(CRM.vars.exportUi.fields);
     var starFields = [];
@@ -54,7 +38,7 @@
     relatedFields['*'] = starFields;
 
     $scope.getFields = function() {
-      return {results: fields[$scope.contact_type]};
+      return {results: fields[$scope.data.contact_type]};
     };
 
     $scope.getRelatedFields = function(contact_type) {
@@ -63,16 +47,12 @@
       };
     };
 
-    $scope.contact_type = 'Individual';
-    $scope.columns = [];
-    $scope.newCol = '';
-
     // Add new col
-    $scope.$watch('newCol', function(val) {
+    $scope.$watch('new.col', function(val) {
       var field = val;
       $timeout(function() {
         if (field) {
-          $scope.columns.push({
+          $scope.data.columns.push({
             select: field,
             name: '',
             location_type_id: null,
@@ -82,17 +62,17 @@
             relationship_type_id: null,
             relationship_direction: null
           });
-          $scope.newCol = '';
+          $scope.new.col = '';
         }
       });
     });
 
     // Remove col
-    $scope.$watch('columns', function(values) {
+    $scope.$watch('data.columns', function(values) {
       // Remove empty values
       _.each(values, function(col, index) {
         if (!col.select) {
-          $scope.columns.splice(index, 1);
+          $scope.data.columns.splice(index, 1);
         } else {
           var selection = $scope.fields[col.select];
           if (selection.relationship_type_id) {
@@ -111,17 +91,5 @@
       });
     }, true);
   });
-  //
-  //angular.module('exportui').directive('crmExportField', function() {
-  //  return {
-  //    restrict: 'AE',
-  //    scope: {
-  //      crmExportField: '=field'
-  //    },
-  //    link: function() {
-  //
-  //    }
-  //  };
-  //});
 
 })(angular, CRM.$, CRM._);
