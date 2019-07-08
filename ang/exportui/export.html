@@ -1,0 +1,24 @@
+<form>
+  <div crm-ui-debug="columns"></div>
+
+  <div>
+    <label>{{ ts('Contact Type') }}</label>
+    <input class="huge" crm-ui-select="{data: contact_types}" ng-model="contact_type" />
+  </div>
+
+  <table class="selector">
+    <tbody>
+      <tr ng-repeat="field in columns">
+        <td ng-include="'~/exportui/exportField.html'"></td>
+      </tr>
+      <tr>
+        <td colspan="6">
+          <input class="big crm-action-menu fa-plus" crm-ui-select="{data: getFields, placeholder: ts('Add field')}" ng-model="newCol" />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+
+
+</form>

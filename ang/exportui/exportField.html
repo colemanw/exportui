@@ -1,0 +1,14 @@
+<div>
+  <input class="twenty" crm-ui-select="{data: getFields, allowClear: true, placeholder: 'clear'}" ng-model="field.select" />
+</div>
+<div ng-if="fields[field.select].relationship_type_id">
+  <input class="twenty" crm-ui-select="{data: getRelatedFields(fields[field.select].related_contact_type), allowClear: true, placeholder: ts('Choose field')}" ng-model="field.name" />
+</div>
+<div>
+  <span ng-if="field.name && fields[field.name].has_location">
+    <input class="twelve crm-action-menu" crm-ui-select="{data: location_type_id, allowClear: true, placeholder: ts('Primary')}" ng-model="field.location_type_id" />
+    </span>
+  <span ng-repeat="(list, options) in option_list" ng-if="(field.location_type_id || !fields[field.name].has_location) && fields[field.name].option_list === list">
+    <input class="twelve" crm-ui-select="{data: options}" ng-model="field[list]" />
+  </span>
+</div>
