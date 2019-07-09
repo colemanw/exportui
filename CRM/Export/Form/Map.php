@@ -69,6 +69,7 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
       ],
     ]);
 
+    // Bootstrap angular and load exportui app
     $loader = new Civi\Angular\AngularLoader();
     $loader->setModules(['exportui']);
     $loader->load();
@@ -85,11 +86,12 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
       ],
       [
         'type' => 'done',
-        'icon' => 'fa-times',
+        'icon' => 'fa-ban',
         'name' => ts('Return to Search'),
       ],
       [
         'type' => 'next',
+        'icon' => 'fa-download',
         'name' => ts('Download File'),
       ],
     ]);
@@ -112,7 +114,6 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
     $exportParams = $this->controller->exportValues('Select');
 
     $greetingOptions = CRM_Export_Form_Select::getGreetingOptions();
-
     if (!empty($greetingOptions)) {
       foreach ($greetingOptions as $key => $value) {
         if ($option = CRM_Utils_Array::value($key, $exportParams)) {
@@ -129,62 +130,26 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
       }
     }
 
-    $currentPath = CRM_Utils_System::currentPath();
-
-    $urlParams = NULL;
-    $qfKey = CRM_Utils_Request::retrieve('qfKey', 'String', $this);
-    if (CRM_Utils_Rule::qfKey($qfKey)) {
-      $urlParams = "&qfKey=$qfKey";
-    }
-
-    //get the button name
-    $buttonName = $this->controller->getButtonName('done');
-    $buttonName1 = $this->controller->getButtonName('next');
-    if ($buttonName == '_qf_Map_done') {
+    // Redirect back to search if "done" button pressed
+    if ($this->controller->getButtonName('done') == '_qf_Map_done') {
+      $currentPath = CRM_Utils_System::currentPath();
+      $urlParams = NULL;
+      $qfKey = CRM_Utils_Request::retrieve('qfKey', 'String', $this);
+      if (CRM_Utils_Rule::qfKey($qfKey)) {
+        $urlParams = "&qfKey=$qfKey";
+      }
       $this->controller->resetPage($this->_name);
       return CRM_Utils_System::redirect(CRM_Utils_System::url($currentPath, 'force=1' . $urlParams));
     }
 
-    $mapperKeys = $params['mapper'][1];
-
-    $checkEmpty = 0;
-    foreach ($mapperKeys as $value) {
-      if ($value[0]) {
-        $checkEmpty++;
-      }
-    }
-
-    if (!$checkEmpty) {
-      $this->set('mappingId', NULL);
-      CRM_Utils_System::redirect(CRM_Utils_System::url($currentPath, '_qf_Map_display=true' . $urlParams));
-    }
-
-    if ($buttonName1 == '_qf_Map_next') {
-      if (!empty($params['updateMapping'])) {
-        //save mapping fields
-        CRM_Core_BAO_Mapping::saveMappingFields($params, $params['mappingId']);
-      }
-
-      if (!empty($params['saveMapping'])) {
-        $mappingParams = [
-          'name' => $params['saveMappingName'],
-          'description' => $params['saveMappingDesc'],
-          'mapping_type_id' => $this->get('mappingTypeId'),
-        ];
-
-        $saveMapping = CRM_Core_BAO_Mapping::add($mappingParams);
-
-        //save mapping fields
-        CRM_Core_BAO_Mapping::saveMappingFields($params, $saveMapping->id);
-      }
-    }
+    $selectedFields = json_decode($params['export_field_map'], TRUE);
 
     //get the csv file
     CRM_Export_BAO_Export::exportComponents($this->get('selectAll'),
       $this->get('componentIds'),
       (array) $this->get('queryParams'),
       $this->get(CRM_Utils_Sort::SORT_ORDER),
-      $mapperKeys,
+      $selectedFields,
       $this->get('returnProperties'),
       $this->get('exportMode'),
       $this->get('componentClause'),
