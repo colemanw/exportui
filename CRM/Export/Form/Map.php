@@ -62,6 +62,7 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
       'fields' => CRM_Export_Utils::getExportFields($this->get('exportMode')),
       'contact_types' => array_values($contactTypes),
       'location_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Address::buildOptions('location_type_id'), 'id', 'text'),
+      'preview_data' => $this->getPreviewData(),
       'option_list' => [
         'phone_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Phone::buildOptions('phone_type_id'), 'id', 'text'),
         'website_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Website::buildOptions('website_type_id'), 'id', 'text'),
@@ -159,6 +160,22 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
       $exportParams,
       $this->get('queryOperator')
     );
+  }
+
+  /**
+   * @return array
+   */
+  protected function getPreviewData() {
+    $data = [];
+    //  $processor = new CRM_Export_BAO_ExportProcessor($this->get('exportMode'), NULL, $this->get('queryOperator'));
+    //  $returnProperties = $processor->getReturnProperties();
+    //  list($query, $select, $from, $where, $having) = $processor->runQuery((array) $this->get('queryParams'), $this->get(CRM_Utils_Sort::SORT_ORDER), $returnProperties);
+    //  $groupBy = CRM_Export_BAO_Export::getGroupBy($processor, $returnProperties, $query);
+    //  $query = CRM_Core_DAO::executeQuery("$select $from $where $having $groupBy LIMIT 5");
+    //  while ($query->fetch()) {
+    //    $data[] = $query->toArray();
+    //  }
+    return $data;
   }
 
   /**
