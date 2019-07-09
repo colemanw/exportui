@@ -1,11 +1,11 @@
 <?php
 
-class CRM_Exportui_Utils {
+class CRM_Export_Utils {
 
   /**
    * @return array
    */
-  public static function getExportFields() {
+  public static function getExportFields($exportMode) {
     $fields = CRM_Core_BAO_Mapping::getBasicFields('Export');
     $hier = [];
 
@@ -24,7 +24,6 @@ class CRM_Exportui_Utils {
     $relTypes = civicrm_api3('RelationshipType', 'get', ['options' => ['limit' => 0]])['values'];
 
     // Add component fields
-    $exportMode = CRM_Export_Form_Select::CONTACT_EXPORT; // temp placeholder for real data
     $compFields = [];
     $compLabels = CRM_Core_BAO_Mapping::addComponentFields($compFields, 'Export', $exportMode);
     foreach ($compLabels as $comp => $label) {

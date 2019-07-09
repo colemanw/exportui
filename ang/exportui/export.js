@@ -15,6 +15,8 @@
       columns: []
     };
     $scope.new = {col: ''};
+    var contactTypes = [];
+    var contactSubTypes = {};
     var fields = _.cloneDeep(CRM.vars.exportUi.fields);
     var relatedFields = _.cloneDeep(CRM.vars.exportUi.fields);
     var starFields = [];
@@ -37,6 +39,46 @@
     });
     relatedFields['*'] = starFields;
 
+    _.each($scope.contact_types, function(type) {
+      contactTypes.push(type.text);
+      if (type.children) {
+        _.each(type.children, function(subType) {
+          contactSubTypes[subType.id] = type.id;
+        });
+      }
+    });
+
+    function getSelectedColumns() {
+      var map = [];
+      _.each($scope.data.columns, function(col, no) {
+        // Make a copy of col without the extra angular props
+        var item = JSON.parse(angular.toJson(col));
+        delete item.select;
+        item.contact_type = $scope.data.contact_type;
+        item.column_number = no;
+        map.push(item);
+      });
+      return map;
+    }
+
+    function loadFieldMap(map) {
+      $scope.data.columns = [];
+      _.each(map, function(col) {
+        // Set main contact type selector, preferring sub-types
+        if (contactSubTypes[col.contact_type]) {
+          $scope.data.contact_type = col.contact_type;
+        } else if (!contactSubTypes[$scope.data.contact_type] && _.contains(contactTypes, col.contact_type)) {
+          $scope.data.contact_type = col.contact_type;
+        }
+        if (col.relationship_type_id && col.relationship_direction) {
+          col.select = '' + col.relationship_type_id + '_' + col.relationship_direction;
+        } else {
+          col.select = col.name;
+        }
+        $scope.data.columns.push(col);
+      });
+    }
+
     $scope.getFields = function() {
       return {results: fields[$scope.data.contact_type]};
     };
@@ -46,6 +88,11 @@
         return {results: relatedFields[contact_type]};
       };
     };
+
+    // Load saved mapping
+    if ($('input[name=export_field_map]').val()) {
+      loadFieldMap(JSON.parse($('input[name=export_field_map]').val()));
+    }
 
     // Add new col
     $scope.$watch('new.col', function(val) {
@@ -89,6 +136,8 @@
           });
         }
       });
+      // Store data in a quickform hidden field
+      $('input[name=export_field_map]').val(JSON.stringify(getSelectedColumns()));
     }, true);
   });
 

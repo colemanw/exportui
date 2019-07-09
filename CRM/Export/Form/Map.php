@@ -39,20 +39,6 @@
 class CRM_Export_Form_Map extends CRM_Core_Form {
 
   /**
-   * Mapper fields
-   *
-   * @var array
-   */
-  protected $_mapperFields;
-
-  /**
-   * Number of columns in import file
-   *
-   * @var int
-   */
-  protected $_exportColumnCount;
-
-  /**
    * Loaded mapping ID
    *
    * @var int
@@ -65,33 +51,32 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
    * @return void
    */
   public function preProcess() {
-    $this->_exportColumnCount = $this->get('exportColumnCount');
     $this->_mappingId = $this->get('mappingId');
 
-    if (!$this->_exportColumnCount) {
-      // Set default from saved mapping
-      if ($this->_mappingId) {
-        $mapping = new CRM_Core_DAO_MappingField();
-        $mapping->mapping_id = $this->_mappingId;
-        $this->_exportColumnCount = $mapping->count();
-      }
-      else {
-        $this->_exportColumnCount = 10;
-      }
+    $contactTypes = array_column(CRM_Utils_Array::makeNonAssociative(CRM_Contact_BAO_ContactType::basicTypePairs(), 'id', 'text'), NULL, 'id');
+    foreach (CRM_Contact_BAO_ContactType::subTypeInfo() as $subType) {
+      $contactTypes[$subType['parent']]['children'][] = ['id' => $subType['name'], 'text' => $subType['label'], 'description' => CRM_Utils_Array::value('description', $subType)];
     }
-    else {
-      $this->_exportColumnCount += 10;
-    }
+
+    Civi::resources()->addVars('exportUi', [
+      'fields' => CRM_Export_Utils::getExportFields($this->get('exportMode')),
+      'contact_types' => array_values($contactTypes),
+      'location_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Address::buildOptions('location_type_id'), 'id', 'text'),
+      'option_list' => [
+        'phone_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Phone::buildOptions('phone_type_id'), 'id', 'text'),
+        'website_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Website::buildOptions('website_type_id'), 'id', 'text'),
+        'im_provider_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_IM::buildOptions('provider_id'), 'id', 'text'),
+      ],
+    ]);
+
+    $loader = new Civi\Angular\AngularLoader();
+    $loader->setModules(['exportui']);
+    $loader->load();
   }
 
   public function buildQuickForm() {
-    CRM_Core_BAO_Mapping::buildMappingForm($this,
-      'Export',
-      $this->_mappingId,
-      $this->_exportColumnCount,
-      2,
-      $this->get('exportMode')
-    );
+
+    $this->add('hidden', 'export_field_map');
 
     $this->addButtons([
       [
@@ -99,61 +84,28 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
         'name' => ts('Previous'),
       ],
       [
-        'type' => 'next',
-        'name' => ts('Export'),
-        'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-      ],
-      [
         'type' => 'done',
         'icon' => 'fa-times',
-        'name' => ts('Done'),
+        'name' => ts('Return to Search'),
+      ],
+      [
+        'type' => 'next',
+        'name' => ts('Download File'),
       ],
     ]);
   }
 
-  /**
-   * Global validation rules for the form.
-   *
-   * @param array $fields
-   *   Posted values of the form.
-   *
-   * @param $values
-   * @param int $mappingTypeId
-   *
-   * @return array
-   *   list of errors to be posted back to the form
-   */
-  public static function formRule($fields, $values, $mappingTypeId) {
-    $errors = [];
-
-    if (!empty($fields['saveMapping']) && !empty($fields['_qf_Map_next'])) {
-      $nameField = CRM_Utils_Array::value('saveMappingName', $fields);
-      if (empty($nameField)) {
-        $errors['saveMappingName'] = ts('Name is required to save Export Mapping');
-      }
-      else {
-        //check for Duplicate mappingName
-        if (CRM_Core_BAO_Mapping::checkMapping($nameField, $mappingTypeId)) {
-          $errors['saveMappingName'] = ts('Duplicate Export Mapping Name');
-        }
-      }
+  public function setDefaultValues() {
+    $defaults = [];
+    if ($this->_mappingId) {
+      $mappingFields = civicrm_api3('mappingField', 'get', ['mapping_id' => $this->_mappingId, 'options' => ['limit' => 0, 'sort' => 'column_number']]);
+      $defaults['export_field_map'] = json_encode(array_values($mappingFields['values']));
     }
-
-    if (!empty($errors)) {
-      $_flag = 1;
-      $assignError = new CRM_Core_Page();
-      $assignError->assign('mappingDetailsError', $_flag);
-      return $errors;
-    }
-    else {
-      return TRUE;
-    }
+    return $defaults;
   }
 
   /**
-   * Process the uploaded file.
-   *
-   * @return void
+   * Process the form submission.
    */
   public function postProcess() {
     $params = $this->controller->exportValues($this->_name);
@@ -189,14 +141,8 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
     $buttonName = $this->controller->getButtonName('done');
     $buttonName1 = $this->controller->getButtonName('next');
     if ($buttonName == '_qf_Map_done') {
-      $this->set('exportColumnCount', NULL);
       $this->controller->resetPage($this->_name);
       return CRM_Utils_System::redirect(CRM_Utils_System::url($currentPath, 'force=1' . $urlParams));
-    }
-
-    if ($this->controller->exportValue($this->_name, 'addMore')) {
-      $this->set('exportColumnCount', $this->_exportColumnCount);
-      return;
     }
 
     $mapperKeys = $params['mapper'][1];
