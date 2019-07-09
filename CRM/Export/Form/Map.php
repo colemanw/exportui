@@ -114,23 +114,6 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
     $params = $this->controller->exportValues($this->_name);
     $exportParams = $this->controller->exportValues('Select');
 
-    $greetingOptions = CRM_Export_Form_Select::getGreetingOptions();
-    if (!empty($greetingOptions)) {
-      foreach ($greetingOptions as $key => $value) {
-        if ($option = CRM_Utils_Array::value($key, $exportParams)) {
-          if ($greetingOptions[$key][$option] == ts('Other')) {
-            $exportParams[$key] = $exportParams["{$key}_other"];
-          }
-          elseif ($greetingOptions[$key][$option] == ts('List of names')) {
-            $exportParams[$key] = '';
-          }
-          else {
-            $exportParams[$key] = $greetingOptions[$key][$option];
-          }
-        }
-      }
-    }
-
     // Redirect back to search if "done" button pressed
     if ($this->controller->getButtonName('done') == '_qf_Map_done') {
       $currentPath = CRM_Utils_System::currentPath();
