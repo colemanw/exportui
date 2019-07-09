@@ -10,9 +10,9 @@ class CRM_Exportui_Utils {
     $hier = [];
 
     $categories = [
-      'contact' => ['text' => ts('Contact Fields')],
-      'address' => ['text' => ts('Address Fields')],
-      'communication' => ['text' => ts('Communication Fields')],
+      'contact' => ['text' => ts('Contact Fields'), 'is_contact' => TRUE],
+      'address' => ['text' => ts('Address Fields'), 'is_contact' => TRUE],
+      'communication' => ['text' => ts('Communication Fields'), 'is_contact' => TRUE],
     ];
     $optionMap = [
       'civicrm_website' => 'website_type_id',
@@ -22,6 +22,26 @@ class CRM_Exportui_Utils {
     // Whitelist of field properties we actually care about; others will be discarded
     $fieldProps = ['id', 'text', 'has_location', 'option_list', 'relationship_type_id', 'related_contact_type'];
     $relTypes = civicrm_api3('RelationshipType', 'get', ['options' => ['limit' => 0]])['values'];
+
+    // Add component fields
+    $exportMode = CRM_Export_Form_Select::CONTACT_EXPORT; // temp placeholder for real data
+    $compFields = [];
+    $compLabels = CRM_Core_BAO_Mapping::addComponentFields($compFields, 'Export', $exportMode);
+    foreach ($compLabels as $comp => $label) {
+      $categories[$comp] = ['text' => $label];
+      foreach ($compFields[$comp] as $key => $field) {
+        $field['text'] = $field['title'];
+        $field['id'] = $key;
+        $categories[$comp]['children'][] = array_intersect_key($field, array_flip($fieldProps));
+      }
+    }
+
+    // Unset groups, tags, notes for component export
+    if ($exportMode != CRM_Export_Form_Select::CONTACT_EXPORT) {
+      foreach (array_keys($fields) as $type) {
+        CRM_Utils_Array::remove($fields[$type], 'groups', 'tags', 'notes');
+      }
+    }
 
     foreach (array_keys($fields) as $contactType) {
       unset($fields[$contactType]['related']);
@@ -44,11 +64,11 @@ class CRM_Exportui_Utils {
         if (!empty($field['custom_group_id'])) {
           $group = $field['custom_group_id'];
           $hier[$contactType][$group]['text'] = $field['groupTitle'];
+          $hier[$contactType][$group]['is_contact'] = TRUE;
         }
         if (!empty($field['related'])) {
           $group = 'related';
           $hier[$contactType][$group]['text'] = ts('Related Contact Info');
-          $hier[$contactType][$group]['relationships'] = TRUE;
           list($type, , $dir) = explode('_', $key);
           $field['related_contact_type'] = CRM_Utils_Array::value("contact_sub_type_$dir", $relTypes[$type], CRM_Utils_Array::value("contact_type_$dir", $relTypes[$type], '*'));
           // Skip relationship types targeting disabled contacts

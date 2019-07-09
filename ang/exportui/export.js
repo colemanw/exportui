@@ -18,13 +18,12 @@
     var fields = _.cloneDeep(CRM.vars.exportUi.fields);
     var relatedFields = _.cloneDeep(CRM.vars.exportUi.fields);
     var starFields = [];
-    _.each(relatedFields, function(groups) {
-      _.each(groups, function(group, index) {
+    _.each(relatedFields, function(groups, cat) {
+      _.each(groups, function(group) {
         _.each(group.children, function(field) {
           $scope.fields[field.id] = field;
         });
-        if (group.relationships) {
-          groups.splice(index, 1);
+        if (!group.is_contact) {
           return;
         }
         var existing = _.where(starFields, {text: group.text});
@@ -34,6 +33,7 @@
           starFields.push(group);
         }
       });
+      relatedFields[cat] = _.filter(relatedFields[cat], 'is_contact');
     });
     relatedFields['*'] = starFields;
 
