@@ -1,1 +1,17 @@
 /* Add any CSS rules for Angular module "exportui" */
+table.crm-export-field-selector thead th,
+table.crm-export-field-selector tbody tr {
+  background-color: #FAFAFA;
+}
+table.crm-export-field-selector tbody tr:nth-child(odd) {
+  background-color: #EFEFEF;
+}
+.crm-export-field-selector tr[ng-repeat] td:first-child {
+  cursor: move;
+}
+.crm-export-field-selector tr[ng-repeat] td:first-child > div + div {
+  margin-left: 40px;
+}
+.crm-export-field-selector tr[ng-repeat] td:first-child > div + div + div {
+  margin-left: 60px;
+}

@@ -19,6 +19,7 @@ return [
   'requires' => [
     'crmUi',
     'crmUtil',
+    'ui.sortable',
   ],
   'settings' => [],
 ];

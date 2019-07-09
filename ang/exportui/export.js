@@ -116,11 +116,12 @@
 
     // Remove col
     $scope.$watch('data.columns', function(values) {
-      // Remove empty values
       _.each(values, function(col, index) {
+        // Remove empty values
         if (!col.select) {
           $scope.data.columns.splice(index, 1);
         } else {
+          // Format item
           var selection = $scope.fields[col.select];
           if (selection.relationship_type_id) {
             col.relationship_type_id = selection.relationship_type_id;
@@ -137,7 +138,11 @@
         }
       });
       // Store data in a quickform hidden field
-      $('input[name=export_field_map]').val(JSON.stringify(getSelectedColumns()));
+      var selectedColumns = getSelectedColumns();
+      $('input[name=export_field_map]').val(JSON.stringify(selectedColumns));
+
+      // Hide submit button when no fields selected
+      $('.crm-button_qf_Map_next').toggle(!!selectedColumns.length);
     }, true);
   });
 

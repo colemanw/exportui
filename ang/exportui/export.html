@@ -1,16 +1,19 @@
-<div>
-  <label>{{ ts('Contact Type') }}</label>
-  <input class="huge" crm-ui-select="{data: contact_types}" ng-model="data.contact_type" />
-</div>
-
-<table class="selector">
-  <tbody>
+<table class="crm-export-field-selector dataTable">
+  <thead>
+    <tr>
+      <th colspan="6">
+        <label>{{ ts('Contact Type') }}</label>
+        <input class="big" crm-ui-select="{data: contact_types}" ng-model="data.contact_type" />
+      </th>
+    </tr>
+  </thead>
+  <tbody ui-sortable="{axis: 'y', items: '[ng-repeat]'}" ng-model="data.columns">
     <tr ng-repeat="field in data.columns">
       <td ng-include="'~/exportui/exportField.html'"></td>
     </tr>
     <tr>
       <td colspan="6">
-        <input class="big crm-action-menu fa-plus" crm-ui-select="{data: getFields, placeholder: ts('Add field')}" ng-model="new.col" />
+        <input class="twenty crm-action-menu fa-plus" crm-ui-select="{data: getFields, placeholder: ts('Add field')}" ng-model="new.col" />
       </td>
     </tr>
   </tbody>
