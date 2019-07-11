@@ -18,3 +18,8 @@
     </tr>
   </tbody>
 </table>
+<div ng-if="data.columns.length">
+  <button type="button" ng-click="saveMappingDialog()" crm-icon="fa-save">
+    {{ ts('Save Fields') }}
+  </button>
+</div>

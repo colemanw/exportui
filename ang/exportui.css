@@ -17,3 +17,12 @@ table.crm-export-field-selector tbody tr:last-child {
 .crm-export-field-selector .crm-export-add-field {
   width: 16em;
 }
+.crm-export-ui-save-mapping-dialog .crm-form-block > div {
+  padding: 5px;
+}
+.crm-export-ui-save-mapping-dialog .ui-dialog-buttonpane {
+  position: absolute;
+  bottom: 20px;
+  height: 20px;
+  width: calc(100% - 3em);
+}

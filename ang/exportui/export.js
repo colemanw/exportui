@@ -2,7 +2,7 @@
 
   angular.module('exportui', CRM.angular.modules)
 
-  .controller('ExportUiCtrl', function($scope, $timeout) {
+  .controller('ExportUiCtrl', function($scope, $timeout, crmApi, dialogService) {
     // The ts() and hs() functions help load strings for this module.
     var ts = $scope.ts = CRM.ts('exportui');
 
@@ -54,6 +54,7 @@
         // Make a copy of col without the extra angular props
         var item = JSON.parse(angular.toJson(col));
         delete item.select;
+        delete item.mapping_id;
         item.contact_type = $scope.data.contact_type;
         item.column_number = no;
         map.push(item);
@@ -87,6 +88,57 @@
       return function() {
         return {results: relatedFields[contact_type]};
       };
+    };
+
+    $scope.saveMappingDialog = function() {
+      var options = CRM.utils.adjustDialogDefaults({
+        width: '40%',
+        height: 300,
+        autoOpen: false,
+        title: ts('Save Fields')
+      });
+      var mappingNames = _.transform(CRM.vars.exportUi.mapping_names, function(result, n, key) {
+        result[key] = n.toLowerCase();
+      });
+      var model = {
+        ts: ts,
+        saving: false,
+        overwrite: CRM.vars.exportUi.mapping_id ? '1' : '0',
+        mapping_id: CRM.vars.exportUi.mapping_id,
+        mapping_type_id: CRM.vars.exportUi.mapping_type_id,
+        mapping_names: CRM.vars.exportUi.mapping_names,
+        new_name: CRM.vars.exportUi.mapping_id ? CRM.vars.exportUi.mapping_names[CRM.vars.exportUi.mapping_id] : '',
+        description: CRM.vars.exportUi.mapping_description,
+        nameIsUnique: function() {
+          return !_.contains(mappingNames, this.new_name.toLowerCase()) || (this.overwrite === '1' && this.new_name.toLowerCase() === this.mapping_names[this.mapping_id].toLowerCase());
+        },
+        saveMapping: function() {
+          this.saving = true;
+          var mapping = {
+            id: this.overwrite === '1' ? this.mapping_id : null,
+            mapping_type_id: this.mapping_type_id,
+            name: this.new_name,
+            description: this.description,
+            sequential: 1
+          },
+            mappingFields = getSelectedColumns();
+          if (!mapping.id) {
+            _.each(mappingFields, function(field) {
+              delete field.id;
+            });
+          }
+          mapping['api.MappingField.replace'] = {values: mappingFields};
+          crmApi('Mapping', 'create', mapping).then(function(result) {
+            CRM.vars.exportUi.mapping_id = result.id;
+            CRM.vars.exportUi.mapping_description = mapping.description;
+            CRM.vars.exportUi.mapping_names[result.id] = mapping.name;
+            // Call loadFieldMap to update field ids in $scope.data.columns
+            loadFieldMap(result.values[0]['api.MappingField.replace'].values);
+            dialogService.close('exportSaveMapping');
+          });
+        }
+      };
+      dialogService.open('exportSaveMapping', '~/exportui/exportSaveMapping.html', model, options);
     };
 
     // Load saved mapping

@@ -57,12 +57,18 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
     foreach (CRM_Contact_BAO_ContactType::subTypeInfo() as $subType) {
       $contactTypes[$subType['parent']]['children'][] = ['id' => $subType['name'], 'text' => $subType['label'], 'description' => CRM_Utils_Array::value('description', $subType)];
     }
+    $mappingTypeId = $this->get('mappingTypeId');
+    $mappings = civicrm_api3('Mapping', 'get', ['return' => ['name', 'description'], 'mapping_type_id' => $mappingTypeId, 'options' => ['limit' => 0]]);
 
     Civi::resources()->addVars('exportUi', [
       'fields' => CRM_Export_Utils::getExportFields($this->get('exportMode')),
       'contact_types' => array_values($contactTypes),
       'location_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Address::buildOptions('location_type_id'), 'id', 'text'),
       'preview_data' => $this->getPreviewData(),
+      'mapping_id' => $this->_mappingId,
+      'mapping_description' => $this->_mappingId ? $mappings['values'][$this->_mappingId]['description'] : '',
+      'mapping_type_id' => $mappingTypeId,
+      'mapping_names' => CRM_Utils_Array::collect('name', $mappings['values']),
       'option_list' => [
         'phone_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Phone::buildOptions('phone_type_id'), 'id', 'text'),
         'website_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Website::buildOptions('website_type_id'), 'id', 'text'),
