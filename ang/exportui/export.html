@@ -1,9 +1,9 @@
-<table class="crm-export-field-selector dataTable">
+<table class="crm-export-field-selector">
   <thead>
     <tr>
       <th colspan="6">
         <label>{{ ts('Contact Type') }}</label>
-        <input class="big" crm-ui-select="{data: contact_types}" ng-model="data.contact_type" />
+        <input class="twelve" crm-ui-select="{data: contact_types}" ng-model="data.contact_type" />
       </th>
     </tr>
   </thead>
@@ -13,7 +13,7 @@
     </tr>
     <tr>
       <td colspan="6">
-        <input class="twenty crm-action-menu fa-plus" crm-ui-select="{data: getFields, placeholder: ts('Add field')}" ng-model="new.col" />
+        <input class="crm-action-menu fa-plus crm-export-add-field" crm-ui-select="{data: getFields, placeholder: ts('Add field')}" ng-model="new.col" />
       </td>
     </tr>
   </tbody>

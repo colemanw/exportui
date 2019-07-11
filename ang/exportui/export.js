@@ -8,7 +8,7 @@
 
     $scope.option_list = CRM.vars.exportUi.option_list;
     $scope.contact_types = CRM.vars.exportUi.contact_types;
-    $scope.location_type_id = CRM.vars.exportUi.location_type_id;
+    $scope.location_type_id = [{id: '', text: ts('Primary')}].concat(CRM.vars.exportUi.location_type_id);
     $scope.fields = {};
     $scope.data = {
       contact_type: 'Individual',
