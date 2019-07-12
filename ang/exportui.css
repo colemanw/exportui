@@ -5,13 +5,17 @@ table.crm-export-field-selector tbody tr {
 table.crm-export-field-selector tbody tr:nth-child(odd) {
   background-color: #EFEFEF;
 }
-table.crm-export-field-selector tbody tr:last-child {
-  background-color: #9fc8e2;
+table.crm-export-field-selector tfoot tr {
+  background-color: white;
+  border-top: 2px solid #CFCEC3;
 }
-.crm-export-field-selector tr[ng-repeat] td:first-child {
+table.crm-export-field-selector tfoot tr td > span {
+  margin-left: 18px;
+}
+.crm-export-field-selector tbody td:first-child {
   cursor: move;
 }
-.crm-export-field-selector tr[ng-repeat] td:first-child > div + div {
+.crm-export-field-selector tbody td:first-child > div + div {
   margin-left: 17px;
 }
 .crm-export-field-selector .crm-export-add-field {

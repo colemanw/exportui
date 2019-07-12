@@ -66,7 +66,7 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
       'location_type_id' => CRM_Utils_Array::makeNonAssociative(CRM_Core_BAO_Address::buildOptions('location_type_id'), 'id', 'text'),
       'preview_data' => $this->getPreviewData(),
       'mapping_id' => $this->_mappingId,
-      'mapping_description' => $this->_mappingId ? $mappings['values'][$this->_mappingId]['description'] : '',
+      'mapping_description' => $mappings['values'][$this->_mappingId]['description'] ?? '',
       'mapping_type_id' => $mappingTypeId,
       'mapping_names' => CRM_Utils_Array::collect('name', $mappings['values']),
       'option_list' => [
