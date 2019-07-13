@@ -10,6 +10,9 @@
   <tbody ui-sortable="{axis: 'y'}" ng-model="data.columns">
     <tr ng-repeat="field in data.columns">
       <td ng-include="'~/exportui/exportField.html'"></td>
+      <td ng-repeat="row in data.preview">
+        {{ showPreview(row, field) }}
+      </td>
     </tr>
   </tbody>
   <tfoot>

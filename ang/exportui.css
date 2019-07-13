@@ -1,4 +1,16 @@
-/* Add any CSS rules for Angular module "exportui" */
+/* "fade-out" effect */
+div[ng-controller="ExportUiCtrl"] {
+  position: relative;
+}
+div[ng-controller="ExportUiCtrl"]:after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 20%;
+  content: ' ';
+  background-image: linear-gradient(to right, transparent, #efefe5);
+}
 table.crm-export-field-selector tbody tr {
   background-color: #FAFAFA;
 }
@@ -12,8 +24,13 @@ table.crm-export-field-selector tfoot tr {
 table.crm-export-field-selector tfoot tr td > span {
   margin-left: 18px;
 }
+.crm-export-field-selector tbody td {
+  width: 18%
+}
 .crm-export-field-selector tbody td:first-child {
   cursor: move;
+  width: 28%;
+  min-width: 230px;
 }
 .crm-export-field-selector tbody td:first-child > div + div {
   margin-left: 17px;

@@ -155,15 +155,31 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
    * @return array
    */
   protected function getPreviewData() {
-    $data = [];
-    //  $processor = new CRM_Export_BAO_ExportProcessor($this->get('exportMode'), NULL, $this->get('queryOperator'));
-    //  $returnProperties = $processor->getReturnProperties();
-    //  list($query, $select, $from, $where, $having) = $processor->runQuery((array) $this->get('queryParams'), $this->get(CRM_Utils_Sort::SORT_ORDER), $returnProperties);
-    //  $groupBy = CRM_Export_BAO_Export::getGroupBy($processor, $returnProperties, $query);
-    //  $query = CRM_Core_DAO::executeQuery("$select $from $where $having $groupBy LIMIT 5");
-    //  while ($query->fetch()) {
-    //    $data[] = $query->toArray();
-    //  }
+    $exportParams = $this->controller->exportValues('Select');
+    $isPostalOnly = (
+      isset($exportParams['postal_mailing_export']['postal_mailing_export']) &&
+      $exportParams['postal_mailing_export']['postal_mailing_export'] == 1
+    );
+    $processor = new CRM_Export_BAO_ExportProcessor($this->get('exportMode'), NULL, $this->get('queryOperator'), $this->get('mergeSameHousehold'), $isPostalOnly, $this->get('mergeSameAddress'));
+    $processor->setComponentTable($this->get('componentTable'));
+    $processor->setComponentClause($this->get('componentClause'));
+    $data = $processor->getPreview(4);
+    $ids = CRM_Utils_Array::collect('id', $data);
+    $data = array_pad($data, 4, []);
+
+    // Add location-type-specific data
+    if ($ids) {
+      foreach (['address', 'phone', 'email'] as $ent) {
+        foreach (civicrm_api3($ent, 'get', ['options' => ['limit' => 0], 'contact_id' => ['IN' => $ids]])['values'] as $loc) {
+          $row = array_search($loc['contact_id'], $ids);
+          $suffix = '_' . $loc['location_type_id'] . ($ent == 'phone' ? '_' . $loc['phone_type_id'] : '');
+          CRM_Utils_Array::remove($loc, 'id', 'contact_id', 'location_type_id', 'phone_type_id');
+          foreach ($loc as $name => $val) {
+            $data[$row][$name . $suffix] = $val;
+          }
+        }
+      }
+    }
     return $data;
   }
 

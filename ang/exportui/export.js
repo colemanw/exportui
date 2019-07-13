@@ -11,15 +11,18 @@
     $scope.location_type_id = [{id: '', text: ts('Primary')}].concat(CRM.vars.exportUi.location_type_id);
     $scope.fields = {};
     $scope.data = {
+      preview: CRM.vars.exportUi.preview_data,
       contact_type: 'Individual',
       columns: []
     };
     $scope.new = {col: ''};
-    var contactTypes = [];
-    var contactSubTypes = {};
-    var fields = _.cloneDeep(CRM.vars.exportUi.fields);
-    var relatedFields = _.cloneDeep(CRM.vars.exportUi.fields);
-    var starFields = [];
+    var contactTypes = [],
+      contactSubTypes = {},
+      relations = [],
+      cids = _.filter(_.map(CRM.vars.exportUi.preview_data, 'id')),
+      fields = _.cloneDeep(CRM.vars.exportUi.fields),
+      relatedFields = _.cloneDeep(CRM.vars.exportUi.fields),
+      starFields = [];
     _.each(relatedFields, function(groups, cat) {
       _.each(groups, function(group) {
         _.each(group.children, function(field) {
@@ -89,6 +92,44 @@
         return {results: relatedFields[contact_type]};
       };
     };
+
+    $scope.showPreview = function(row, field) {
+      var key = field.name;
+      if (field.relationship_type_id && field.relationship_direction) {
+        fetchRelations(field);
+        key = '' + field.relationship_type_id + '_' + field.relationship_direction + '_' + key;
+      }
+      if (field.location_type_id) {
+        key += '_' + field.location_type_id + (field.phone_type_id ? '_' + field.phone_type_id : '');
+      }
+      return field.name ? row[key] : '';
+    };
+
+    function fetchRelations(field) {
+      if (cids.length && !relations[field.relationship_type_id + field.relationship_direction]) {
+        relations[field.relationship_type_id + field.relationship_direction] = true;
+        var a = field.relationship_direction[0],
+          b = field.relationship_direction[2],
+          params = {
+            relationship_type_id: field.relationship_type_id,
+            filters: {is_current: 1},
+            "api.Contact.getsingle": {id: '$value.contact_id_' + b}
+          };
+        params['contact_' + a] = {'IN': cids};
+        (function (field, params) {
+          crmApi('Relationship', 'get', params).then(function (data) {
+            _.each(data.values, function (rel) {
+              var row = cids.indexOf(rel['contact_id_' + a]);
+              if (row > -1) {
+                _.each(rel["api.Contact.getsingle"], function (item, key) {
+                  $scope.data.preview[row][field.relationship_type_id + '_' + field.relationship_direction + '_' + key] = item;
+                });
+              }
+            });
+          });
+        })(field, params);
+      }
+    }
 
     $scope.saveMappingDialog = function() {
       var options = CRM.utils.adjustDialogDefaults({
@@ -166,7 +207,7 @@
       });
     });
 
-    // Remove col
+    // When adding/removing columns
     $scope.$watch('data.columns', function(values) {
       _.each(values, function(col, index) {
         // Remove empty values
