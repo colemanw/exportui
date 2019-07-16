@@ -1,8 +1,9 @@
 /* "fade-out" effect */
-div[ng-controller="ExportUiCtrl"] {
+div.crm-export-field-selector-outer {
   position: relative;
+  overflow-x: hidden;
 }
-div[ng-controller="ExportUiCtrl"]:after {
+div.crm-export-field-selector-outer:after {
   position: absolute;
   top: 0;
   right: 0;
@@ -25,10 +26,10 @@ table.crm-export-field-selector tfoot tr td > span {
   margin-left: 18px;
 }
 .crm-export-field-selector tbody td {
+  cursor: move;
   width: 18%
 }
 .crm-export-field-selector tbody td:first-child {
-  cursor: move;
   width: 28%;
   min-width: 230px;
 }
@@ -46,4 +47,10 @@ table.crm-export-field-selector tfoot tr td > span {
   bottom: 20px;
   height: 20px;
   width: calc(100% - 3em);
+}
+.crm-export-row-handle {
+  opacity: .5;
+}
+.crm-export-field-selector tr:hover .crm-export-row-handle {
+  opacity: 1;
 }
