@@ -3,54 +3,35 @@
   angular.module('exportui', CRM.angular.modules)
 
   .controller('ExportUiCtrl', function($scope, $timeout, crmApi, dialogService) {
-    // The ts() and hs() functions help load strings for this module.
-    var ts = $scope.ts = CRM.ts('exportui');
+    var ts = $scope.ts = CRM.ts('exportui'),
+      // Which relationships we've already looked up for the preview
+      relations = [];
 
     $scope.option_list = CRM.vars.exportUi.option_list;
     $scope.contact_types = CRM.vars.exportUi.contact_types;
     $scope.location_type_id = [{id: '', text: ts('Primary')}].concat(CRM.vars.exportUi.location_type_id);
-    $scope.fields = {};
+    // Map of all fields keyed by name
+    $scope.fields = _.transform(CRM.vars.exportUi.fields, function(result, category) {
+      _.each(category.children, function(field) {
+        result[field.id] = field;
+      });
+    }, {});
     $scope.data = {
       preview: CRM.vars.exportUi.preview_data,
-      contact_type: 'Individual',
+      contact_type: '',
       columns: []
     };
+    // For the "add new field" dropdown
     $scope.new = {col: ''};
-    var contactTypes = [],
-      contactSubTypes = {},
-      relations = [],
-      cids = _.filter(_.map(CRM.vars.exportUi.preview_data, 'id')),
-      fields = _.cloneDeep(CRM.vars.exportUi.fields),
-      relatedFields = _.cloneDeep(CRM.vars.exportUi.fields),
-      starFields = [];
-    _.each(relatedFields, function(groups, cat) {
-      _.each(groups, function(group) {
-        _.each(group.children, function(field) {
-          $scope.fields[field.id] = field;
-        });
-        if (!group.is_contact) {
-          return;
-        }
-        var existing = _.where(starFields, {text: group.text});
-        if (existing.length) {
-          existing[0].children = _.uniq(group.children.concat(existing[0].children), 'id');
-        } else {
-          starFields.push(group);
-        }
+    var contactTypes = _.transform($scope.contact_types, function(result, type) {
+      result.push(type.id);
+      _.each(type.children || [], function(subType) {
+        result.push(subType.id);
       });
-      relatedFields[cat] = _.filter(relatedFields[cat], 'is_contact');
     });
-    relatedFields['*'] = starFields;
+    var cids = _.filter(_.map(CRM.vars.exportUi.preview_data, 'id'));
 
-    _.each($scope.contact_types, function(type) {
-      contactTypes.push(type.text);
-      if (type.children) {
-        _.each(type.children, function(subType) {
-          contactSubTypes[subType.id] = type.id;
-        });
-      }
-    });
-
+    // Get fields for performing the export or saving the field mapping
     function getSelectedColumns() {
       var map = [];
       _.each($scope.data.columns, function(col, no) {
@@ -58,21 +39,20 @@
         var item = JSON.parse(angular.toJson(col));
         delete item.select;
         delete item.mapping_id;
-        item.contact_type = $scope.data.contact_type;
+        item.contact_type = $scope.data.contact_type || 'Contact';
         item.column_number = no;
         map.push(item);
       });
       return map;
     }
 
+    // Load a saved field mapping
     function loadFieldMap(map) {
       $scope.data.columns = [];
+      var mapContactTypes = [];
       _.each(map, function(col) {
-        // Set main contact type selector, preferring sub-types
-        if (contactSubTypes[col.contact_type]) {
-          $scope.data.contact_type = col.contact_type;
-        } else if (!contactSubTypes[$scope.data.contact_type] && _.contains(contactTypes, col.contact_type)) {
-          $scope.data.contact_type = col.contact_type;
+        if (_.contains(contactTypes, col.contact_type)) {
+          mapContactTypes.push(col.contact_type);
         }
         if (col.relationship_type_id && col.relationship_direction) {
           col.select = '' + col.relationship_type_id + '_' + col.relationship_direction;
@@ -81,15 +61,39 @@
         }
         $scope.data.columns.push(col);
       });
+      // If all the fields are for the same contact type, set it form-wide
+      if (!$scope.data.contact_type && _.unique(mapContactTypes).length === 1) {
+        $scope.data.contact_type = mapContactTypes[0];
+      }
+    }
+
+    // Return fields relevant to a contact type
+    // Filter out non-contact fields (for relationship selectors)
+    function filterFields(contactType, onlyContact) {
+      return _.transform(CRM.vars.exportUi.fields, function(result, cat) {
+        if (!cat.is_contact && onlyContact) {
+          return;
+        }
+        var fields = _.filter(cat.children, function(field) {
+          return !field.contact_type || !contactType || _.contains(field.contact_type, contactType);
+        });
+        if (fields.length) {
+          result.push({
+            id: cat.id,
+            text: cat.text,
+            children: fields
+          });
+        }
+      });
     }
 
     $scope.getFields = function() {
-      return {results: fields[$scope.data.contact_type]};
+      return {results: filterFields($scope.data.contact_type)};
     };
 
     $scope.getRelatedFields = function(contact_type) {
       return function() {
-        return {results: relatedFields[contact_type]};
+        return {results: filterFields(contact_type, true)};
       };
     };
 

@@ -3,11 +3,21 @@
 class CRM_Export_Utils {
 
   /**
+   * This transforms the lists of fields for each contact type & component
+   * into a single unified list suitable for select2.
+   *
+   * The return values of CRM_Core_BAO_Mapping::getBasicFields contain a separate field list
+   * for every contact type and sub-type. This is extremely redundant as 90%+ of the fields
+   * in each list are the same. To avoid sending bloated data to the client-side, we turn
+   * it into a single list where fields not shared by every contact type get a contact_type
+   * attribute so they can be filtered appropriately by the selector.
+   *
+   * We also sort fields into optgroup categories, and add component fields appropriate to this export.
+   *
    * @return array
    */
   public static function getExportFields($exportMode) {
-    $fields = CRM_Core_BAO_Mapping::getBasicFields('Export');
-    $hier = [];
+    $fieldGroups = CRM_Core_BAO_Mapping::getBasicFields('Export');
 
     $categories = [
       'contact' => ['text' => ts('Contact Fields'), 'is_contact' => TRUE],
@@ -37,15 +47,16 @@ class CRM_Export_Utils {
 
     // Unset groups, tags, notes for component export
     if ($exportMode != CRM_Export_Form_Select::CONTACT_EXPORT) {
-      foreach (array_keys($fields) as $type) {
-        CRM_Utils_Array::remove($fields[$type], 'groups', 'tags', 'notes');
+      foreach (array_keys($fieldGroups) as $contactType) {
+        CRM_Utils_Array::remove($fieldGroups[$contactType], 'groups', 'tags', 'notes');
       }
     }
 
-    foreach (array_keys($fields) as $contactType) {
-      unset($fields[$contactType]['related']);
-      $hier[$contactType] = $categories;
-      foreach ($fields[$contactType] as $key => $field) {
+    // Now combine all those redundant lists of fields into a single list with categories
+    foreach ($fieldGroups as $contactType => $fields) {
+      // 'related' was like a poor-mans optgroup.
+      unset($fields['related']);
+      foreach ($fields as $key => $field) {
         $group = 'contact';
         $field['text'] = $field['title'];
         $field['id'] = $key;
@@ -62,24 +73,36 @@ class CRM_Export_Utils {
         }
         if (!empty($field['custom_group_id'])) {
           $group = $field['custom_group_id'];
-          $hier[$contactType][$group]['text'] = $field['groupTitle'];
-          $hier[$contactType][$group]['is_contact'] = TRUE;
+          $categories[$group]['text'] = $field['groupTitle'];
+          $categories[$group]['is_contact'] = TRUE;
         }
         if (!empty($field['related'])) {
           $group = 'related';
-          $hier[$contactType][$group]['text'] = ts('Related Contact Info');
+          $categories[$group]['text'] = ts('Related Contact Info');
           list($type, , $dir) = explode('_', $key);
           $field['related_contact_type'] = CRM_Utils_Array::value("contact_sub_type_$dir", $relTypes[$type], CRM_Utils_Array::value("contact_type_$dir", $relTypes[$type], '*'));
           // Skip relationship types targeting disabled contacts
-          if ($field['related_contact_type'] != '*' && !isset($fields[$field['related_contact_type']])) {
+          if ($field['related_contact_type'] != '*' && !isset($fieldGroups[$field['related_contact_type']])) {
             continue;
           }
         }
-        // Discard unwanted field props to save space
-        $hier[$contactType][$group]['children'][] = array_intersect_key($field, array_flip($fieldProps));
+        if (empty($categories[$group]['children'][$key])) {
+          // Discard unwanted field props to save space
+          $categories[$group]['children'][$key] = array_intersect_key($field, array_flip($fieldProps));
+        }
+        // Set contact_type, which gets added to on every iteration
+        $categories[$group]['children'][$key]['contact_type'][] = $contactType;
+        // If a field applies to every contact type, remove the contact_type flag as it's redundant
+        if (count($fieldGroups) == count($categories[$group]['children'][$key]['contact_type'])) {
+          unset($categories[$group]['children'][$key]['contact_type']);
+        }
       }
     }
-    return array_map('array_values', $hier);
+    // We needed meaningful keys while organizing fields but if we send them client-side they'll just be in the way
+    foreach ($categories as &$category) {
+      $category['children'] = array_values($category['children']);
+    }
+    return array_values($categories);
   }
 
 }
