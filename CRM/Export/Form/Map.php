@@ -55,7 +55,11 @@ class CRM_Export_Form_Map extends CRM_Core_Form {
 
     $contactTypes = array_column(CRM_Utils_Array::makeNonAssociative(CRM_Contact_BAO_ContactType::basicTypePairs(), 'id', 'text'), NULL, 'id');
     foreach (CRM_Contact_BAO_ContactType::subTypeInfo() as $subType) {
-      $contactTypes[$subType['parent']]['children'][] = ['id' => $subType['name'], 'text' => $subType['label'], 'description' => CRM_Utils_Array::value('description', $subType)];
+      $contactTypes[$subType['parent']]['children'][] = [
+        'id' => $subType['name'],
+        'text' => $subType['label'],
+        'description' => $subType['description'] ?? NULL,
+      ];
     }
     $mappingTypeId = $this->get('mappingTypeId');
     $mappings = civicrm_api3('Mapping', 'get', ['return' => ['name', 'description'], 'mapping_type_id' => $mappingTypeId, 'options' => ['limit' => 0]]);

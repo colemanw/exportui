@@ -80,7 +80,7 @@ class CRM_Export_Utils {
           $group = 'related';
           $categories[$group]['text'] = ts('Related Contact Info');
           list($type, , $dir) = explode('_', $key);
-          $field['related_contact_type'] = CRM_Utils_Array::value("contact_sub_type_$dir", $relTypes[$type], CRM_Utils_Array::value("contact_type_$dir", $relTypes[$type], '*'));
+          $field['related_contact_type'] = $relTypes[$type]["contact_sub_type_$dir"] ?? $relTypes[$type]["contact_type_$dir"] ?? '*';
           // Skip relationship types targeting disabled contacts
           if ($field['related_contact_type'] != '*' && !isset($fieldGroups[$field['related_contact_type']])) {
             continue;
