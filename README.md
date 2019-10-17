@@ -1,19 +1,22 @@
 # exportui
 
-![Screenshot](/images/screenshot.png)
+![Screenshot](/images/ExportUI.git)
 
-(*FIXME: In one or two paragraphs, describe what the extension does and why one would download it. *)
+This extension replaces the screen used to map fields for exports with a more user friendly one.
+
+Key features are the ability to re-order fields easily (missing from the core version) and
+a in-UI display of the how the first few rows of the export will look with the chosen mapping.
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 ## Requirements
 
-* PHP v5.6+
-* CiviCRM (*FIXME: Version number*)
+* PHP v7.0+
+* CiviCRM 5.18
 
 ## Installation (Web UI)
 
-This extension has not yet been published for installation via the web UI.
+This extension been published for installation via the web UI.
 
 ## Installation (CLI, Zip)
 
@@ -37,8 +40,8 @@ cv en exportui
 
 ## Usage
 
-(* FIXME: Where would a new user navigate to get started? What changes would they see? *)
+When this extension is installed the screen for mapping fields on UI exports will present as the improved
+version. No user action is required.
 
 ## Known Issues
 
-(* FIXME *)
